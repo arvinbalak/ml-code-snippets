@@ -1,5 +1,5 @@
 import pandas as pd
-from fido import factors, query_var, ordered_hidden_var_list, p_col_name
+from aria import factors, ordered_hidden_var_list, p_col_name
 pd.set_option('mode.chained_assignment', None)
 
 # ----------------------
@@ -34,50 +34,52 @@ pd.set_option('mode.chained_assignment', None)
 # ----------------------
 
 def restrict(factor, variable, value):
-    if DEBUG:
-        print("Restricted {}:\n".format(variable), factor)
+    if SHOW_STEPS:
+        print_latex("Restricted {}:".format(variable))
+        print_pd(factor)
     query = factor[variable]==value
     result = factor.loc[query]
     result = result.drop(variable, axis=1)
-    if DEBUG:
-        print("\nResult:\n", result, "\n--------------\n")
+    if SHOW_STEPS:
+        print_latex("Result:")
+        print_pd(result, extra_space=True)
     return result
 
 def sumout(factor,variable):
-    if DEBUG:
-        print("Sumout {} from:\n".format(variable), factor)
+    if SHOW_STEPS:
+        print_latex("Sumout {} from:".format(variable))
+        print_pd(factor)
     # Remove coloumn corresponding to given variable
     columns = list(factor)
     columns.remove(variable)
-    subset = factor[columns]
+    factor_copy = factor.copy()[columns]
     deleted_indices = []
-    for index, row in subset.iterrows():
+    for index, row in factor[columns].iterrows():
         row = row.drop(p_col_name)
-        var_values = subset.loc[:, subset.columns != p_col_name]
+        var_values = factor_copy.loc[:, factor_copy.columns != p_col_name]
         matches = ((var_values == row) | (var_values.isnull() & row.isnull())).all(1)
 
-        if index >= len(matches):
-            break
-        elif index in deleted_indices:
-            continue
-
         # sum matching rows
-        subset.at[index, p_col_name] = subset[matches][p_col_name].sum(axis=0)
+        first_match_index = matches.idxmax()
+        factor_copy.at[first_match_index, p_col_name] = factor_copy[matches][p_col_name].sum(axis=0)
 
         # remove summed up rows except first one
         res = next((i for i, j in enumerate(matches) if j), None)
         matches.iloc[res] = False
         to_delete_indices = matches.index[matches].tolist()
         deleted_indices += to_delete_indices
-        subset.drop(to_delete_indices, inplace=True)
+        factor_copy.drop(to_delete_indices, inplace=True)
 
-    if DEBUG:
-        print("\nResult:\n", subset, "\n--------------\n")
-    return subset
+    if SHOW_STEPS:
+        print_latex("Result:")
+        print_pd(factor_copy, extra_space=True)
+    return factor_copy
 
 def multiply(factor1, factor2):
-    if DEBUG:
-        print("Multipying:\n", factor1, "\n", factor2)
+    if SHOW_STEPS:
+        print_latex("Multipying:")
+        print_pd(factor1)
+        print_pd(factor2)
     f1_columns =  list(factor1)
     f1_columns.remove(p_col_name)
     f2_columns = list(factor2)
@@ -91,20 +93,23 @@ def multiply(factor1, factor2):
     merged_factors.drop(f1_p_col_name, axis=1, inplace=True)
     merged_factors.drop(f2_p_col_name, axis=1, inplace=True)
 
-    if DEBUG:
-        print("\nResult:\n", merged_factors, "\n--------------\n")
+    if SHOW_STEPS:
+        print_latex("Result:")
+        print_pd(merged_factors, extra_space=True)
     return merged_factors
 
 def normalize(factor):
-    if DEBUG:
-        print("Normalize:\n", factor)
+    if SHOW_STEPS:
+        print_latex("Normalize:")
+        print_pd(factor)
 
     sum = factor[p_col_name].sum(axis=0)
 
     factor[p_col_name] = factor[p_col_name].apply(lambda x: x / float(sum))
 
-    if DEBUG:
-        print("\nResult:\n", factor, "\n--------------\n")
+    if SHOW_STEPS:
+        print_latex("Result:")
+        print_pd(factor, extra_space=True)
     return factor
 
 
@@ -120,13 +125,31 @@ def get_var_to_factor_mapping(factor_list):
                 else:
                     vars_dict[var] = [index]
 
-    if DEBUG:
-        print ("New mapping:")
-        print(vars_dict)
     return vars_dict
 
+def print_pd(pd, extra_space=False):
+    if LATEX_FORMAT:
+        print(pd.to_latex())
+        if extra_space:
+            print("\\bigskip")
+            print("\\bigskip")
+    else:
+        print(pd)
+        if extra_space:
+            print("\n")        
+
+def print_latex(str, extra_space=False):
+    if LATEX_FORMAT:
+        print(str + "\\\\")
+        if extra_space:
+            print("\\bigskip")
+            print("\\bigskip")
+    else:
+        print(str + "\n")
+        if extra_space:
+            print("\n")
+
 def inference(factor_list_full, query_var, ordered_hidden_var_list_full, evidence_list):
-    print ("Inferring with evidence: {}".format(evidence_list))
     factor_list = factor_list_full.copy()
     ordered_hidden_var_list =  ordered_hidden_var_list_full.copy()
     var_to_factor_mapping = get_var_to_factor_mapping(factor_list)
@@ -136,8 +159,6 @@ def inference(factor_list_full, query_var, ordered_hidden_var_list_full, evidenc
         for factor_index in var_to_factor_mapping[var]:
             result = restrict(factor_list[factor_index],var,evidence)
             if len(result.columns) <= 1:
-                if DEBUG:
-                    print("Removed above factor from factor list: {}".format(var))
                 factor_list[factor_index] = None
             else:
                 factor_list[factor_index] = result
@@ -181,23 +202,47 @@ def inference(factor_list_full, query_var, ordered_hidden_var_list_full, evidenc
         factor_list[var_factors_indices[0]] = None
 
     query_result = normalize(query_factor)
-    print (query_result)
-    print("\n")
+    print_pd (query_result, extra_space=True)
     return query_result
 
-DEBUG = False
+SHOW_STEPS = False
+PRINT_TO_FILE = False
+LATEX_FORMAT = False
 
-evidence_list = {'M': 1, 'FH':1}
+if PRINT_TO_FILE:
+    import sys
+    sys.stdout = open('ve_result.txt', "w")
+
+################# aria.py
+evidence_list = {}
+query_var = 'AH'
+print_latex('a) P(AH)')
 inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
-evidence_list = {'M': 1, 'FH':1, 'B':1}
+print_latex('b) P(AS|M, AH)')
+evidence_list = {'M': 1, 'AH':1}
+query_var = 'AS'
 inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
-evidence_list = {'M': 1, 'FH':1, 'B':1, 'NA':1}
+print_latex('c) P(AS|M, AH, AB)')
+evidence_list = {'M': 1, 'AH':1, 'AB':1}
+query_var = 'AS'
 inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
+print_latex('d) P(AS|M, AH, AB, NA)')
+evidence_list = {'M': 1, 'AH':1, 'AB':1, 'NA':1}
+query_var = 'AS'
+inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
+################# holmes.py
+# evidence_list = {'W':1,'G':1}
+# query_var = 'B'
+# inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
+################ holmes2.py
+# evidence_list = {}
+# query_var = 'B'
+# inference(factors, query_var, ordered_hidden_var_list, evidence_list)
 
 
 

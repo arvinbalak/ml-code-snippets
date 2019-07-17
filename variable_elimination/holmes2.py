@@ -23,12 +23,6 @@ factors=[   [[  'E',    'Prob'],
              [  1,      0.0001],
              [  0,      0.9999]],
 
-            [[  'R',    'E',    'Prob'],
-             [  1,      1,      0.9],
-             [  0,      1,      0.1],
-             [  1,      0,      0.0002],
-             [  0,      0,      0.9998]],
-
             [[  'A',    'B',    'E',     'Prob'],
              [  1,      1,      1,      0.96],
              [  0,      1,      1,      0.04],
@@ -67,5 +61,6 @@ for index, factor in enumerate(factors):
 
     factors[index] = df
 
-ordered_hidden_var_list = ['R', 'E', 'A', 'B', 'W', 'G']
+ordered_hidden_var_list = ['W', 'G', 'A', 'B', 'E']
+
 

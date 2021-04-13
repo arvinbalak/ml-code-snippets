@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "ml-code-snippets"
+version = "0.1.0"
+description = "Python for ml coding practice."
+authors = ["aravindbk92 <aravindbk92@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.8.*"
+pandas = "^1.2.4"
+numpy = "^1.20.2"
+scipy = "^1.6.2"
+matplotlib = "^3.4.1"
+seaborn = "^0.11.1"
+scikit-learn = "^0.24.1"
+torch = "^1.8.1"
+torchvision = "^0.9.1"
+torchaudio = "^0.8.1"
+
+[tool.poetry.dev-dependencies]
+black = "*"
+isort = "*"
+flake8 = "*"
+mypy = "*"
+pre-commit = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

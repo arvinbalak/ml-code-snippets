@@ -5,9 +5,12 @@
     "tasks": [
         {
             "label": "Current Python file: Read input.txt and Run",
-            "type": "shell",
+            "type": "process",
             // "command": "python ${file} < ${fileDirname}/input.txt",
-            "command": "python ${file}",
+            "command": "${config:python.pythonPath}",
+            "args": [
+                "${file}"
+            ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",

@@ -1,0 +1,12 @@
+{
+  "python.formatting.blackPath": ".venv/bin/black",
+  "python.formatting.provider": "black",
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Path": ".venv/bin/flake8",
+  "python.linting.mypyEnabled": true,
+  "python.linting.mypyPath": ".venv/bin/mypy",
+  "python.pythonPath": ".venv/bin/python",
+  "python.sortImports.path": ".venv/bin/isort",
+  "editor.formatOnSave": true
+}

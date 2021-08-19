@@ -2,7 +2,7 @@
 name = "ml-code-snippets"
 version = "0.1.0"
 description = "Python for ml coding practice."
-authors = ["aravindbk92 <aravindbk92@gmail.com>"]
+authors = ["arvinbalak <arvin.balak@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "3.8.*"
